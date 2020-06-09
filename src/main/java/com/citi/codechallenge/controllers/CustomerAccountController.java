@@ -10,8 +10,10 @@ import com.citi.codechallenge.domain.SuccessResponse;
 import com.citi.codechallenge.services.CustomerAccountService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,11 +33,11 @@ public class CustomerAccountController {
     public SuccessResponse createCustomer(@RequestBody CustomerForm customerForm) {
 
         if (StringUtils.isNotBlank(customerForm.getCustomerId())) {
-            throw new RuntimeException("Customer Id should be Blank or NULL.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer Id should be Blank or NULL.");
         }
 
         if (isBlank(customerForm.getSsn()) || isBlank(customerForm.getLastName())) {
-            throw new RuntimeException("SSN and LastName are mandatory.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "SSN and LastName are mandatory.");
         }
 
         Customer customer = convertCustomerFormToCustomer(customerForm);
