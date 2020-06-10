@@ -8,19 +8,16 @@ import com.citi.codechallenge.domain.AccountType;
 import com.citi.codechallenge.domain.Customer;
 import com.citi.codechallenge.domain.SuccessResponse;
 import com.citi.codechallenge.services.CustomerAccountService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.commons.lang3.StringUtils.upperCase;
+import static org.apache.commons.lang3.StringUtils.*;
 
 @RestController
 @RequestMapping(path = "/", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -32,7 +29,7 @@ public class CustomerAccountController {
     @PostMapping(path = "/customer/add", consumes = "application/json")
     public SuccessResponse createCustomer(@RequestBody CustomerForm customerForm) {
 
-        if (StringUtils.isNotBlank(customerForm.getCustomerId())) {
+        if (isNotBlank(customerForm.getCustomerId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer Id should be Blank or NULL.");
         }
 
@@ -49,12 +46,12 @@ public class CustomerAccountController {
     @PostMapping(path = "/customer/update", consumes = "application/json")
     public SuccessResponse updateCustomer(@RequestBody CustomerForm customerForm) {
 
-        if (StringUtils.isBlank(customerForm.getCustomerId())) {
-            throw new RuntimeException("Customer Id should not be Blank or NULL.");
+        if (isBlank(customerForm.getCustomerId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer Id should not be Blank or NULL.");
         }
 
         if (isBlank(customerForm.getSsn()) || isBlank(customerForm.getLastName())) {
-            throw new RuntimeException("SSN and LastName are mandatory.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "SSN and LastName are mandatory.");
         }
 
         Customer customer = convertCustomerFormToCustomer(customerForm);
@@ -65,6 +62,9 @@ public class CustomerAccountController {
 
     @DeleteMapping(path = "/customer/delete", consumes = "application/json")
     public boolean deleteCustomer(@RequestParam String customerId) {
+        if (isBlank(customerId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer Id should not be Blank or NULL.");
+        }
 
         boolean deletedCustomer = customerAccountService.deleteCustomer(customerId);
         return deletedCustomer;
@@ -76,11 +76,11 @@ public class CustomerAccountController {
                                       @RequestParam double amount) {
 
         if (isBlank(customerId)) {
-            throw new RuntimeException("Customer Id should be mandatory.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer Id should be mandatory.");
         }
 
         if (accountType == null) {
-            throw new RuntimeException("Account Type is mandatory.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account Type is mandatory.");
         }
 
         Account account = convertToAccount(accountType, amount);
@@ -104,7 +104,7 @@ public class CustomerAccountController {
     public CustomerAccountForm searchCustomerBySSNAndLastName(@RequestParam String ssn, @RequestParam String lastName) {
         Customer customer = customerAccountService.getCustomerBySSNAndLastName(upperCase(ssn), upperCase(lastName));
         if (customer != null) {
-            throw new RuntimeException("Customer does not exist");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer does not exist");
         }
         System.out.println("First Name :: " + customer.getFirstName());
         System.out.println("Last Name :: " + customer.getLastName());
@@ -179,7 +179,7 @@ public class CustomerAccountController {
                                  @RequestParam String accountId,
                                  @RequestParam double amount) {
         if (isBlank(customerId) || isBlank(accountId) || amount <= 0) {
-            throw new RuntimeException("Customer Id, Account Id and amount are mandatory ");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer Id, Account Id and amount are mandatory ");
         }
 
         boolean deductStatus = customerAccountService.depositAmount(customerId, accountId, amount);
@@ -191,7 +191,7 @@ public class CustomerAccountController {
                                 @RequestParam String accountId,
                                 @RequestParam double amount) {
         if (isBlank(customerId) || isBlank(accountId) || amount <= 0) {
-            throw new RuntimeException("Customer Id, Account Id and amount are mandatory ");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer Id, Account Id and amount are mandatory.");
         }
 
         boolean deductStatus = customerAccountService.deductAmount(customerId, accountId, amount);
@@ -209,7 +209,8 @@ public class CustomerAccountController {
         if (isBlank(fromCustomerId) || isBlank(fromAccountId) ||
                 isBlank(toCustomerId) || isBlank(toAccountId) ||
                 amount <= 0) {
-            throw new RuntimeException("From CustomerId, From AccountId, To CustomerId, To AccountId and Amount are mandatory ");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "From CustomerId, From AccountId, To CustomerId, To AccountId and Amount are mandatory.");
         }
         boolean transfer = customerAccountService.transferFunds(fromCustomerId, fromAccountId,
                 toCustomerId, toAccountId, amount);
@@ -265,7 +266,6 @@ public class CustomerAccountController {
         response.setCustomerId(customerId);
         response.setAccountId(accountId);
         response.setStatus("SUCCESS");
-        response.setDateTime(LocalDateTime.now());
         return response;
     }
 }
